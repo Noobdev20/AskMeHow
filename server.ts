@@ -13,9 +13,9 @@ dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 if (!process.env.GROK_API_KEY && !process.env.GROQ_API_KEY && !process.env.XAI_API_KEY && !process.env.GEMINI_API_KEY) {
   const result = dotenv.config({ path: path.resolve(process.cwd(), ".env.example") });
   if (result.error) {
-    console.warn("[SENTINEL] .env missing and .env.example missing/invalid. Please provide environment variables.");
+    console.warn("[AskMeHow] .env missing and .env.example missing/invalid. Please provide environment variables.");
   } else {
-    console.log("[SENTINEL] Loaded .env.example as fallback environment variables.");
+    console.log("[AskMeHow] Loaded .env.example as fallback environment variables.");
   }
 }
 
@@ -36,14 +36,14 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  console.log(`[SENTINEL] Starting server on Node ${process.version}...`);
+  console.log(`[AskMeHow] Starting server on Node ${process.version}...`);
 
   app.use(express.json());
   
   // Catch JSON parsing errors in request body
   app.use((err: any, req: any, res: any, next: any) => {
     if (err instanceof SyntaxError && 'body' in err) {
-      console.error("[SENTINEL] Request JSON Parse Error:", err.message);
+      console.error("[AskMeHow] Request JSON Parse Error:", err.message);
       return res.status(400).json({ error: "Invalid JSON in request", details: err.message });
     }
     next();
@@ -51,15 +51,15 @@ async function startServer() {
 
   // Health check
   app.get("/api/health", (req, res) => {
-    res.json({ status: "SENTINEL Online", node: process.version, timestamp: new Date().toISOString() });
+    res.json({ status: "AskMeHow Online", node: process.version, timestamp: new Date().toISOString() });
   });
 
   // API Proxy Route
   app.post("/api/chat", async (req, res) => {
-    console.log("[SENTINEL] POST /api/chat hit");
+    console.log("[AskMeHow] POST /api/chat hit");
     try {
       if (!hasApiKeys()) {
-        console.error("[SENTINEL] No API keys configured in .env or .env.example.");
+        console.error("[AskMeHow] No API keys configured in .env or .env.example.");
         return res.status(500).json({ error: "No AI API keys configured. Set GROK_API_KEY/GROQ_API_KEY/XAI_API_KEY or GEMINI_API_KEY in .env" });
       }
 
@@ -73,7 +73,7 @@ async function startServer() {
         const endpoint = isGroq ? 'https://api.groq.com/openai/v1/chat/completions' : 'https://api.x.ai/v1/chat/completions';
         const model = isGroq ? 'llama-3.3-70b-versatile' : 'grok-2-latest';
         
-        console.log(`[SENTINEL] Proxying to ${isGroq ? 'Groq' : 'xAI'} | Model: ${model}`);
+        console.log(`[AskMeHow] Proxying to ${isGroq ? 'Groq' : 'xAI'} | Model: ${model}`);
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -110,7 +110,7 @@ async function startServer() {
       
       // 2. Fallback to Gemini if available
       if (GEMINI_KEY) {
-        console.log("[SENTINEL] Using Gemini Fallback");
+        console.log("[AskMeHow] Using Gemini Fallback");
         const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
         const { messages } = req.body;
         
@@ -141,7 +141,7 @@ async function startServer() {
       // 3. No keys found
       return res.status(500).json({ error: "No AI API keys configured. Please set GROK_API_KEY or GEMINI_API_KEY." });
     } catch (error) {
-      console.error("[SENTINEL] Proxy Exception:", error);
+      console.error("[AskMeHow] Proxy Exception:", error);
       res.status(500).json({ 
         error: "Internal Server Error during proxy",
         details: error instanceof Error ? error.message : String(error)
@@ -165,7 +165,7 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`SENTINEL Server running on http://localhost:${PORT}`);
+    console.log(`AskMeHow Server running on http://localhost:${PORT}`);
   });
 }
 

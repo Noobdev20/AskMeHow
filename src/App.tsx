@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 
 // API Key is now handled securely on the server
-const SYSTEM_PROMPT = `You are SENTINEL, an elite DeFi security analyst.
+const SYSTEM_PROMPT = `You are AskMeHow, an elite DeFi security analyst.
 
 Expert in:
 - Smart contract vulnerabilities
@@ -150,7 +150,7 @@ export default function App() {
         <div className="flex flex-col">
           <h1 className="text-terminal-accent text-xl font-bold tracking-widest flex items-center gap-2">
             <Shield className="w-6 h-6" />
-            SENTINEL
+            AskMeHow
           </h1>
           <p className="text-[10px] opacity-60 uppercase tracking-tighter">DeFi Security Agent</p>
         </div>
@@ -189,7 +189,7 @@ export default function App() {
                   <h2 className="text-3xl font-bold">DEFI SECURITY ANALYST</h2>
                 </div>
                 <p className="text-sm opacity-70 max-w-md leading-relaxed">
-                  I am SENTINEL. I specialize in smart contract vulnerabilities, flash loan exploits, and MEV analysis. How can I assist your security audit today?
+                  I am AskMeHow. I specialize in smart contract vulnerabilities, flash loan exploits, and MEV analysis. How can I assist your security audit today?
                 </p>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl px-4">
