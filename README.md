@@ -1,20 +1,44 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# AskMeHow
+Explains DeFi security to the curious
 
-# Run and deploy your AI Studio app
+## Overview
+AskMeHow is an AI-powered DeFi security analyst that specializes in smart contract vulnerabilities, flash loan attacks, MEV analysis, and security audits.
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/9aaeadab-fc86-4fd9-8f94-5091e6e4a11e
+## Features
+- Smart contract vulnerability analysis
+- Flash loan attack detection
+- MEV (sandwich, frontrun, backrun) analysis
+- Rug pull identification
+- Audit red flag detection
+- Real exploit breakdowns (Ronin, Wormhole, Euler, etc.)
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+
+2. Set up environment variables:
+   Create a `.env` file with your API keys:
+   ```bash
+   GROK_API_KEY="your_grok_api_key_here"
+   # or
+   GEMINI_API_KEY="your_gemini_api_key_here"
+   ```
+
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+4. Open your browser to `http://localhost:3000`
+
+## API Keys
+The app supports multiple AI providers:
+- **Groq/xAI**: Set `GROK_API_KEY` or `GROQ_API_KEY` or `XAI_API_KEY`
+- **Google Gemini**: Set `GEMINI_API_KEY`
+
+You can use either provider or both (the app will prefer Groq/xAI if available).
