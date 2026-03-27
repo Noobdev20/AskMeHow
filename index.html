@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SENTINEL — DeFi Security Agent</title>
+    <title>AskMeHow — DeFi Security Agent</title>
     <script>
-      // SENTINEL Compatibility Shield
+      // AskMeHow Compatibility Shield
       // Prevents browser extensions (like Zerion) from crashing the app with "Cannot redefine property" errors
       (function() {
         const _defineProperty = Object.defineProperty;
@@ -15,7 +15,7 @@
           } catch (e) {
             // If it's a wallet-related property or a "Cannot redefine" error, suppress the crash
             if (prop === 'isZerion' || prop === 'ethereum' || prop === 'isMetaMask' || e.message?.includes('redefine')) {
-              console.warn(`[SENTINEL] Suppressed extension conflict for property: ${prop}`);
+              console.warn(`[AskMeHow] Suppressed extension conflict for property: ${prop}`);
               return obj;
             }
             throw e;
