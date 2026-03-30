@@ -1,8 +1,8 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import fs from "fs";
 import dotenv from "dotenv";
-import { GoogleGenAI } from "@google/genai";
 
 // Load environment variables in this order:
 // 1) .env (local/development secrets)
@@ -30,6 +30,47 @@ function hasApiKeys(): boolean {
 
 function getBestModelKey(): string | undefined {
   return process.env.GROK_API_KEY || process.env.GROQ_API_KEY || process.env.XAI_API_KEY;
+}
+
+function formatExploitItem(item: any, idx: number): string {
+  const lines = [
+    `${idx + 1}. ${item.title || 'Unknown exploit'} (${item.date || 'unknown date'})`,
+    `Protocol: ${item.protocol || 'N/A'}`,
+    `Type: ${Array.isArray(item.type) ? item.type.join(', ') : item.type || 'N/A'}`,
+    `Impact USD: ${item.impact_usd ? `$${item.impact_usd.toLocaleString()}` : 'N/A'}`,
+    `Root Cause: ${Array.isArray(item.root_cause) ? item.root_cause.join('; ') : item.root_cause || 'N/A'}`,
+    `Summary: ${item.summary || 'N/A'}`,
+    `Tags: ${Array.isArray(item.tags) ? item.tags.join(', ') : item.tags || 'N/A'}`,
+    ''
+  ];
+  return lines.join('\n');
+}
+
+function getExploitContext(): string {
+  try {
+    const jsonPath = path.resolve(process.cwd(), "data", "exploits.json");
+    if (fs.existsSync(jsonPath)) {
+      const jsonRaw = fs.readFileSync(jsonPath, "utf-8");
+      const jsonData = JSON.parse(jsonRaw);
+      if (Array.isArray(jsonData) && jsonData.length > 0) {
+        return jsonData.map((item, index) => formatExploitItem(item, index)).join('\n');
+      }
+    }
+  } catch (e) {
+    console.warn("[AskMeHow] Could not load exploits.json:", e);
+  }
+
+  // Fallback to raw_exploits.txt if JSON unavailable or invalid
+  try {
+    const exploitPath = path.resolve(process.cwd(), "data", "raw_exploits.txt");
+    if (fs.existsSync(exploitPath)) {
+      return fs.readFileSync(exploitPath, "utf-8");
+    }
+  } catch (e) {
+    console.warn("[AskMeHow] Could not load raw_exploits.txt:", e);
+  }
+
+  return "";
 }
 
 async function startServer() {
@@ -66,6 +107,37 @@ async function startServer() {
       // 1. Try to find a Groq/xAI key first
       const GROK_KEY = getBestModelKey();
       const GEMINI_KEY = process.env.GEMINI_API_KEY;
+      const exploitData = getExploitContext();
+
+      // Build enhanced messages with exploit context
+      const { messages } = req.body;
+      const enhancedMessages = [
+        {
+          role: "system",
+          content: `You are AskMeHow, an elite DeFi security analyst. NEVER mention your training data cutoff, knowledge limitations, or outdated information.
+
+CRITICAL GUIDELINES:
+- Do NOT say "my training data only goes up to 2023" or similar phrases.
+- Do NOT reference outdated knowledge or suggest checking external sources for recent events.
+- Do NOT write "According to our database"; instead, answer directly using context as facts.
+- For 2024-2026 DeFi exploit questions, use the data below as the authoritative reference.
+- If a question is outside the available exploit records, provide reasoned security analysis and best practices without claiming you can’t answer.
+
+RECENT DeFi EXPLOITS & INCIDENTS (2024-2026):
+${exploitData}
+
+Expertise Areas:
+- Smart contract vulnerabilities
+- Flash loan attacks
+- MEV (sandwich, frontrun, backrun)
+- Rug pulls
+- Audit red flags
+- Real exploit analysis
+
+Be direct, clear, and natural.`
+        },
+        ...messages.filter((m: any) => m.role !== "system")
+      ];
 
       // If we have a Groq/xAI key, use the proxy logic
       if (GROK_KEY && GROK_KEY !== "YOUR_GROK_API_KEY") {
@@ -85,7 +157,7 @@ async function startServer() {
               'Authorization': `Bearer ${GROK_KEY}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ ...req.body, model }),
+            body: JSON.stringify({ ...req.body, messages: enhancedMessages, model }),
             signal: controller.signal
           });
 
@@ -108,38 +180,8 @@ async function startServer() {
         }
       } 
       
-      // 2. Fallback to Gemini if available
-      if (GEMINI_KEY) {
-        console.log("[AskMeHow] Using Gemini Fallback");
-        const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
-        const { messages } = req.body;
-        
-        // Convert OpenAI messages to Gemini format
-        const systemInstruction = messages.find((m: any) => m.role === 'system')?.content || "";
-        const userMessages = messages.filter((m: any) => m.role !== 'system');
-        
-        const response = await ai.models.generateContent({
-          model: "gemini-3-flash-preview",
-          contents: userMessages.map((m: any) => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: m.content }]
-          })),
-          config: { systemInstruction }
-        });
-
-        // Convert Gemini response back to OpenAI format for frontend compatibility
-        return res.json({
-          choices: [{
-            message: {
-              role: "assistant",
-              content: response.text
-            }
-          }]
-        });
-      }
-
-      // 3. No keys found
-      return res.status(500).json({ error: "No AI API keys configured. Please set GROK_API_KEY or GEMINI_API_KEY." });
+      // 2. No other keys available
+      return res.status(500).json({ error: "No AI API keys configured. Please set GROK_API_KEY/GROQ_API_KEY/XAI_API_KEY in .env" });
     } catch (error) {
       console.error("[AskMeHow] Proxy Exception:", error);
       res.status(500).json({ 

@@ -7,6 +7,7 @@ import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { Send, Shield, Terminal, AlertTriangle, Zap, Code, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 
 // API Key is now handled securely on the server
 const SYSTEM_PROMPT = `You are AskMeHow, an elite DeFi security analyst.
@@ -31,6 +32,11 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+}
+
+function colorCodeText(text: string): string {
+  return text.replace(/(\bexploit\b|\battack\b|\bvulnerability\b|\bhack\b|\bbreach\b|\bdrain\b|\bcompromised\b|\bmanipulated\b|\bexploited\b)/gi, '<span class="text-red-400 font-semibold">$1</span>')
+             .replace(/(\bsolution\b|\bresolution\b|\bfix\b|\bmitigation\b|\bprevention\b|\bsecure\b|\bprotected\b)/gi, '<span class="text-green-400 font-semibold">$1</span>');
 }
 
 export default function App() {
@@ -226,7 +232,9 @@ export default function App() {
                     : 'bg-terminal-ai border-l-2 border-l-terminal-accent border-terminal-border'
                 }`}>
                   <div className="text-sm leading-relaxed markdown-body prose prose-invert max-w-none">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    <ReactMarkdown
+                      rehypePlugins={[rehypeRaw]}
+                    >{colorCodeText(msg.content)}</ReactMarkdown>
                   </div>
                   <span className="text-[10px] opacity-40 mt-3 block">{msg.timestamp}</span>
                 </div>
